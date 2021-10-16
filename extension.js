@@ -95,18 +95,24 @@ async function markdownPdf(option_type) {
       }
     }
 
+    var customTitle = await askForInput(path.basename(uri.fsPath), "Choose a title");
+    while (!customTitle.trim().length) {
+      customTitle = await askForInput(path.basename(uri.fsPath), "Choose a title");
+    }
+
+
     // convert and export markdown to pdf, html, png, jpeg
     if (types && Array.isArray(types) && types.length > 0) {
       for (var i = 0; i < types.length; i++) {
         var type = types[i];
         if (types_format.indexOf(type) >= 0) {
+          //filename = mdfilename.replace(ext, '.' + type);
           filepathWithNameAndExt = mdfilename.replace(filenameWithExt, (filenameInput + "." + type));
-
 
           var text = editor.document.getText();
           var content = convertMarkdownToHtml(mdfilename, type, text);
 
-          var html = makeHtml(content, uri);
+          var html = makeHtml(content, uri, customTitle);
           await exportPdf(html, filepathWithNameAndExt, type, uri);
         } else {
           showErrorMessage('markdownPdf().2 Supported formats: html, pdf, png, jpeg.');
@@ -134,6 +140,7 @@ async function askForInput(value, promt, ignoreFocusOut = true) {
 function isFilenameValid(filename) {
   return filename.match(/^[-\w^&'@{}[\],$=!#().%+~ ]+$/);
 }
+
 
 function markdownPdfOnSave() {
   try {
@@ -345,14 +352,14 @@ function Slug(string) {
 /*
  * make html
  */
-function makeHtml(data, uri) {
+function makeHtml(data, uri, customTitle) {
   try {
     // read styles
     var style = '';
     style += readStyles(uri);
 
     // get title
-    var title = path.basename(uri.fsPath);
+    var title = customTitle;
 
     // read template
     var filename = path.join(__dirname, 'template', 'template.html');
